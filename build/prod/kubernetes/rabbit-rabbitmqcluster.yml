@@ -1,0 +1,10 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  namespace: rabbitmq
+  name: rabbit
+  labels: {}
+  annotations: {}
+spec:
+  replicas: 1
+  image: rabbitmq:3.9
