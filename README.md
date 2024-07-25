@@ -28,10 +28,9 @@ c. **Create The RabbitMQ Cluster and Verify Resources**
     kubectl get pods -n rabbitmq
     kubectl get svc -n rabbitmq
 ```
-## 4. Create the ServiceAccount and Deployment
+## 4. Create the ServiceAccount 
 ```bash
     kubectl apply -f rabbittest-serviceaccount.yml
-    kubectl apply -f rabbittest-deployment.yml
 ```
 ## 5. Install KEDA 
 ```bash
@@ -44,10 +43,11 @@ c. **Create The RabbitMQ Cluster and Verify Resources**
     kubectl get deployments
     kubectl get pods
 ```
-## 7. Inspect RabbitMQ Secrets
+## 7. Inspect RabbitMQ Secrets and Deploy rabbittest-deployment
 ```bash
     kubectl get secret rabbit-default-user -n rabbitmq -o yaml
     echo "ZGVmYXVsdF91c2VyID0gZGVmYXVsdF91c2VyX3dtYUE0aDhPRmJEU05LZHoxV0YKZGVmYXVsdF9wYXNzID0gVGJXRzM4UHBXbFBwQUsxM1dKYWhnSjl0SFJLdUxnVTcK" | base64 --decode 
+    kubectl apply -f rabbittest-deployment.yml
 
 ```
 ## 8. Edit Deployment for Rabbittest to Access the Server:

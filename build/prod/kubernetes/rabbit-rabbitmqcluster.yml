@@ -6,5 +6,5 @@ metadata:
   labels: {}
   annotations: {}
 spec:
-  replicas: 1
+  replicas: 2
   image: rabbitmq:3.9

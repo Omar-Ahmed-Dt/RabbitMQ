@@ -5,7 +5,7 @@ metadata:
   labels:
     app: rabbittest
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: rabbittest
@@ -22,7 +22,8 @@ spec:
             - java -jar /perf_test/perf-test.jar --uri $(RABBIT_MQ_URI) --queue queue --rate 10
           env:
             - name: RABBIT_MQ_URI
-              value: amqp://default_user_wmaA4h8OFbDSNKdz1WF:TbWG38PpWlPpAK13WJahgJ9tHRKuLgU7@rabbit.rabbitmq.svc:5672
+              # value: amqp://default_user_wmaA4h8OFbDSNKdz1WF:TbWG38PpWlPpAK13WJahgJ9tHRKuLgU7@rabbit.rabbitmq.svc:5672
+              value: amqp://:@rabbit.rabbitmq.svc:5672
               # value: amqp://default_user_CEp19JlfPtw3PciCnK5:aJo_RRJZvSK_fwMvuyFAaCUsX2mZ0A8z@rabbit.rabbitmq.svc.cluster.local:5672
           resources:
               requests:
