@@ -1,47 +1,71 @@
 # Stakpak Assessment
 
-## Overview
-This is a kubernetes cluster setup using [Kind](https://kind.sigs.k8s.io/) and have three core components:
-- [Ingress Nginx](https://kubernetes.github.io/ingress-nginx/)
-- [KEDA](https://keda.sh/)
-- [RabbitMQOperator](https://www.rabbitmq.com/kubernetes/operator/operator-overview)
-
-## Prerequisites
-- [Docker](https://docs.docker.com/get-docker/)
-- [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
-- [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- [Helm](https://helm.sh/docs/intro/install/)
-- [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
-
-## Setup
-1. Create a Kind cluster
+## 1. Create a Kind cluster
 ```bash
 kind create cluster --config kind-config.yaml
 ```
 
-2. Install Core Components
+## 2. Install Core Components
 ```bash
-terraform -chdir=build/prod/terraform init && terraform -chdir=build/prod/terraform apply
+terraform -chdir=build/prod/terraform init && terraform -chdir=build/prod/terraform apply --auto-approve
 ```
 
-3. Apply Manifests
+
+## 3. Create the RabbitMQ Cluster
+a. **Install RabbitMQ Operator:**
+   ```bash
+   cd build/prod/kubernetes/
+   kubectl create namespace rabbitmq-system
+   kubectl apply -f https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml
+   ```
+b. **Verify that the RabbitMQ Operator is running:**
 ```bash
-kubectl apply -f ./build/prod/kubernetes
+    kubectl get pods -n rabbitmq-system
 ```
+c. **Create The RabbitMQ Cluster and Verify Resources**
+```bash
+    kubectl apply -f rabbit-rabbitmqcluster.yml
+    kubectl get pods -n rabbitmq
+    kubectl get svc -n rabbitmq
+```
+## 4. Create the ServiceAccount and Deployment
+```bash
+    kubectl apply -f rabbittest-serviceaccount.yml
+    kubectl apply -f rabbittest-deployment.yml
+```
+## 5. Install KEDA 
+```bash
+    kubectl apply -f https://github.com/kedacore/keda/releases/download/v2.7.1/keda-2.7.1.yaml
+    kubectl get pods -n keda
+```
+## 6. Create the ScaledObject
+```bash
+    kubectl apply -f rabbittest-scaledobject.yml
+    kubectl get deployments
+    kubectl get pods
+```
+## 7. Inspect RabbitMQ Secrets
+```bash
+    kubectl get secret rabbit-default-user -n rabbitmq -o yaml
+    echo "ZGVmYXVsdF91c2VyID0gZGVmYXVsdF91c2VyX3dtYUE0aDhPRmJEU05LZHoxV0YKZGVmYXVsdF9wYXNzID0gVGJXRzM4UHBXbFBwQUsxM1dKYWhnSjl0SFJLdUxnVTcK" | base64 --decode 
+
+```
+## 8. Edit Deployment for Rabbittest to Access the Server:
+```bash
+    env:
+  - name: RABBIT_MQ_URI
+    value: amqp://default_user_wmaA4h8OFbDSNKdz1WF:TbWG38PpWlPpAK13WJahgJ9tHRKuLgU7@rabbit.rabbitmq.svc:5672
+```
+## 9. Verify the access and look up the service
+```bash
+    kubectl logs <pod name>
+    kubectl exec -it dnsutils -- nslookup rabbit.rabbitmq.svc.cluster.local
+```
+
+## Ensure all components are running and healthy
+![pods](imgs/all_pods.png)
 
 ## Requirements
 
-- Ensure all components are running and healthy
 - Modify `rabbittest` deployment args to make it scale to maximum replicas
 - Create an Ingress resource to expose rabbitmq management UI
-
-## Notes
-- You are free to use any tools or resources to complete the task
-- You can modify the existing manifests or create new ones including kind configuration
-- `perf-test(rabbittest)` is a performance test tool that can be used to test the RabbitMQ cluster so don't keep it running for long
-
-## Bonus
-- Use our own open-source tool [Devx](https://devx.stakpak.dev/) to modify the manifests
-
-## Submission
-- Fork this repository and submit a PR with your changes# RabbitMQ
