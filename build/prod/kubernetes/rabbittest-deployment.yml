@@ -23,7 +23,7 @@ spec:
           env:
             - name: RABBIT_MQ_URI
               # value: amqp://default_user_wmaA4h8OFbDSNKdz1WF:TbWG38PpWlPpAK13WJahgJ9tHRKuLgU7@rabbit.rabbitmq.svc:5672
-              value: amqp://:@rabbit.rabbitmq.svc:5672
+              value: amqp://default_user_WzCl7Ksjq92B1os3Y5a:pbiPwSTvPXBRGcazWzZCsEfQh1A1mubk@rabbit.rabbitmq.svc:5672
               # value: amqp://default_user_CEp19JlfPtw3PciCnK5:aJo_RRJZvSK_fwMvuyFAaCUsX2mZ0A8z@rabbit.rabbitmq.svc.cluster.local:5672
           resources:
               requests:
@@ -35,6 +35,6 @@ spec:
       restartPolicy: Always
       serviceAccountName: rabbittest
       securityContext:
-        runAsUser: 10000
-        runAsGroup: 10000
-        fsGroup: 10000
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0

@@ -40,21 +40,21 @@ c. **Create The RabbitMQ Cluster and Verify Resources**
 ## 6. Create the ScaledObject
 ```bash
     kubectl apply -f rabbittest-scaledobject.yml
-    kubectl get deployments
-    kubectl get pods
 ```
 ## 7. Inspect RabbitMQ Secrets and Deploy rabbittest-deployment
 ```bash
     kubectl get secret rabbit-default-user -n rabbitmq -o yaml
     echo "ZGVmYXVsdF91c2VyID0gZGVmYXVsdF91c2VyX3dtYUE0aDhPRmJEU05LZHoxV0YKZGVmYXVsdF9wYXNzID0gVGJXRzM4UHBXbFBwQUsxM1dKYWhnSjl0SFJLdUxnVTcK" | base64 --decode 
-    kubectl apply -f rabbittest-deployment.yml
-
 ```
 ## 8. Edit Deployment for Rabbittest to Access the Server:
 ```bash
     env:
   - name: RABBIT_MQ_URI
     value: amqp://default_user_wmaA4h8OFbDSNKdz1WF:TbWG38PpWlPpAK13WJahgJ9tHRKuLgU7@rabbit.rabbitmq.svc:5672
+```
+
+```bash
+    kubectl apply -f rabbittest-deployment.yml
 ```
 ## 9. Verify the access and look up the service
 ```bash
@@ -87,7 +87,8 @@ c. **Create The RabbitMQ Cluster and Verify Resources**
               averageUtilization: 50 
 ```
 
-## Create an Ingress resource to expose rabbitmq management UI
+## Expose rabbitmq management UI
+a. **Create an Ingress resource**
 ```bash
     apiVersion: networking.k8s.io/v1
     kind: Ingress
@@ -109,7 +110,17 @@ c. **Create The RabbitMQ Cluster and Verify Resources**
                     port:
                       number: 15672
 ```
-### Install Ingress controller
+b. **Create an Ingress Controller**
 ```bash
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 ```
+![ingress](imgs/ingress.png)
+
+c. **Update hosts file**
+```bash
+echo "127.0.0.1 rabbitmqtesting.com" | sudo tee -a /etc/hosts
+kubectl port-forward svc/rabbit -n rabbitmq 15672:15672
+```
+
+![pods](imgs/userandpass.png)
+![pods](imgs/UI.png)
