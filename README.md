@@ -58,14 +58,58 @@ c. **Create The RabbitMQ Cluster and Verify Resources**
 ```
 ## 9. Verify the access and look up the service
 ```bash
-    kubectl logs <pod name>
+    kubectl logs <pod name for rabbittest-deployment>
     kubectl exec -it dnsutils -- nslookup rabbit.rabbitmq.svc.cluster.local
 ```
 
 ## Ensure all components are running and healthy
 ![pods](imgs/all_pods.png)
 
-## Requirements
+## To configure the Horizontal Pod Autoscaler (HPA) to scale Rabbittest to a maximum number of replicas
+```bash
+    apiVersion: autoscaling/v2beta2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      name: rabbittest-hpa
+    spec:
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: rabbittest
+      minReplicas: 1
+      maxReplicas: 10
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 50 
+```
 
-- Modify `rabbittest` deployment args to make it scale to maximum replicas
-- Create an Ingress resource to expose rabbitmq management UI
+## Create an Ingress resource to expose rabbitmq management UI
+```bash
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: rabbitmq-ingress
+      namespace: rabbitmq
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    spec:
+      rules:
+        - host: rabbitmqtesting.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: rabbitmq
+                    port:
+                      number: 15672
+```
+### Install Ingress controller
+```bash
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+```
