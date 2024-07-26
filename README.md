@@ -1,5 +1,3 @@
-# Stakpak Assessment
-
 ## 1. Create a Kind cluster
 ```bash
 kind create cluster --config kind-config.yaml
