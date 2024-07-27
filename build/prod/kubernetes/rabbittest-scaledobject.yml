@@ -1,12 +1,13 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
 metadata:
   name: rabbittest
-  labels: {}
-  annotations: {}
+  namespace: default
 spec:
   scaleTargetRef:
-    name: rabbittest
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
+    name: rabbittest
   pollingInterval: 30
   cooldownPeriod: 300
   idleReplicaCount: 0
@@ -17,7 +18,5 @@ spec:
       metadata:
         value: "20"
         queueName: queue
-        mode: MessageRate
+        mode: QueueLength
         hostFromEnv: RABBIT_MQ_URI
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject

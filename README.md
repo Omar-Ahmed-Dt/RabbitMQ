@@ -3,48 +3,41 @@
 kind create cluster --config kind-config.yaml
 ```
 
-## 2. Install Core Components
-```bash
+## 2. Create the RabbitMQ Cluster
+a. **Install RabbitMQ Cluster Operator Deployment and Custom Configuration:**
+   ```bash
 terraform -chdir=build/prod/terraform init && terraform -chdir=build/prod/terraform apply --auto-approve
 ```
-
-
-## 3. Create the RabbitMQ Cluster
-a. **Install RabbitMQ Operator:**
-   ```bash
+**or**
+```bash
 cd build/prod/kubernetes/
 kubectl create namespace rabbitmq-system
 kubectl apply -f https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml
-   ```
-b. **Verify that the RabbitMQ Operator is running:**
-```bash
-kubectl get pods -n rabbitmq-system
 ```
-c. **Create The RabbitMQ Cluster and Verify Resources**
+b. **Create The RabbitMQ Cluster and Verify Resources**
 ```bash
 kubectl apply -f rabbit-rabbitmqcluster.yml
 kubectl get pods -n rabbitmq
 kubectl get svc -n rabbitmq
 ```
-## 4. Create the ServiceAccount 
+![rabbitmq](imgs/rabbitmq_ns.png)
+
+## 3. Create the ServiceAccount 
 ```bash
 kubectl apply -f rabbittest-serviceaccount.yml
 ```
-## 5. Install KEDA 
+## 4. Verify the access and look up the service
 ```bash
-kubectl apply -f https://github.com/kedacore/keda/releases/download/v2.7.1/keda-2.7.1.yaml
-kubectl get pods -n keda
+kubectl logs <pod name for rabbittest-deployment>
+kubectl exec -it dnsutils -- nslookup rabbit.rabbitmq.svc.cluster.local
 ```
-## 6. Create the ScaledObject
-```bash
-kubectl apply -f rabbittest-scaledobject.yml
-```
-## 7. Inspect RabbitMQ Secrets and Deploy rabbittest-deployment
+## 5. Inspect RabbitMQ Secrets and Deploy rabbittest-deployment
 ```bash
 kubectl get secret rabbit-default-user -n rabbitmq -o yaml
 echo "ZGVmYXVsdF91c2VyID0gZGVmYXVsdF91c2VyX3dtYUE0aDhPRmJEU05LZHoxV0YKZGVmYXVsdF9wYXNzID0gVGJXRzM4UHBXbFBwQUsxM1dKYWhnSjl0SFJLdUxnVTcK" | base64 --decode 
 ```
-## 8. Edit Deployment for Rabbittest to Access the Server:
+
+## 6. Edit Deployment for Rabbittest to Access the Server:
 ```bash
     env:
   - name: RABBIT_MQ_URI
@@ -52,37 +45,36 @@ echo "ZGVmYXVsdF91c2VyID0gZGVmYXVsdF91c2VyX3dtYUE0aDhPRmJEU05LZHoxV0YKZGVmYXVsdF
 ```
 
 ```bash
-    kubectl apply -f rabbittest-deployment.yml
+kubectl apply -f rabbittest-deployment.yml
 ```
-## 9. Verify the access and look up the service
+## 7. Install KEDA, It allows Kubernetes to scale applications based on the number of events needing to be processed
 ```bash
-kubectl logs <pod name for rabbittest-deployment>
-kubectl exec -it dnsutils -- nslookup rabbit.rabbitmq.svc.cluster.local
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update
+helm install keda kedacore/keda --namespace keda --create-namespace
+```
+## 8. Create the ScaledObject, It polls the RabbitMQ queue every 30 seconds to check the message rate.
+```bash
+kubectl apply -f rabbittest-scaledobject.yml
+kubectl get scaledobject
+kubectl describe scaledobject rabbittest
+kubectl get pod
 ```
 
 ## Ensure all components are running and healthy
 ![pods](imgs/all_pods.png)
 
-## To configure the Horizontal Pod Autoscaler (HPA) to scale Rabbittest to a maximum number of replicas
+## Modify rabbittest deployment args to make it scale to maximum replicas 
+### Modified the rate to --rate 1000. This increases the message rate, generating a higher load that should trigger the scaling mechanism to reach the maximum replicas (3 replicas in your ScaledObject).
+
 ```bash
-apiVersion: autoscaling/v2beta2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: rabbittest-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: rabbittest
-  minReplicas: 1
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50 
+args:
+   # - java -jar /perf_test/perf-test.jar --uri $(RABBIT_MQ_URI) --queue queue --rate 10
+    - java -jar /perf_test/perf-test.jar --uri $(RABBIT_MQ_URI) --queue queue --rate 1000
+```
+
+```bash
+kubectl apply -f rabbittest-deployment.yml
 ```
 
 ## Expose rabbitmq management UI
