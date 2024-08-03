@@ -1,0 +1,31 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: dnsutils
+  labels:
+    app: dnsutils
+  annotations: {}
+spec:
+  selector:
+    matchLabels:
+      app: dnsutils
+  template:
+    metadata:
+      labels:
+        app: dnsutils
+      annotations: {}
+    spec:
+      containers:
+        - name: default
+          image: busybox
+          command:
+            - sleep
+            - "3600"
+          args: []
+          env: []
+      restartPolicy: Always
+      serviceAccountName: dnsutils
+      securityContext:
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000

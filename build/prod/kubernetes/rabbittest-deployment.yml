@@ -4,6 +4,7 @@ metadata:
   name: rabbittest
   labels:
     app: rabbittest
+  annotations: {}
 spec:
   selector:
     matchLabels:
@@ -12,28 +13,29 @@ spec:
     metadata:
       labels:
         app: rabbittest
+      annotations: {}
     spec:
       containers:
         - name: default
           image: pivotalrabbitmq/perf-test
-          command: ["sh", "-c"]
+          command: []
           args:
-           # - java -jar /perf_test/perf-test.jar --uri $(RABBIT_MQ_URI) --queue queue --rate 10
-            # Modified the rate to --rate 1000. This increases the message rate, generating a higher load that should trigger the scaling mechanism to reach the maximum replicas (3 replicas in your ScaledObject).
-            - java -jar /perf_test/perf-test.jar --uri $(RABBIT_MQ_URI) --queue queue --rate 20
+            - --uri
+            - $(RABBIT_MQ_URI)
+            - --queue
+            - queue
+            - --rate
+            - "10000"
           env:
             - name: RABBIT_MQ_URI
-              value: amqp://default_user_Gf-B3iY5LBj19vEJW3S:WtbmEl2jqfg7Z-LWkqvWX5jlVPey6Qpf@rabbit.rabbitmq.svc:5672
+              value: amqp://default_user_CEp19JlfPtw3PciCnK5:aJo_RRJZvSK_fwMvuyFAaCUsX2mZ0A8z@rabbit.rabbitmq.svc.cluster.local:5672
           resources:
-              requests:
-                cpu: "1"
-                memory: "1Gi"
-              limits:
-                cpu: "2"
-                memory: "4Gi"
+            requests:
+              cpu: "4"
+              memory: 4Gi
       restartPolicy: Always
       serviceAccountName: rabbittest
       securityContext:
-        runAsUser: 0
-        runAsGroup: 0
-        fsGroup: 0
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
